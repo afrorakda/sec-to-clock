@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sec to Clock</title>
+    
+    <link rel="icon" href="image_101.png">
+    <link rel="apple-touch-icon" href="image_101.png">
+
+    <style>
+        :root {
+            --main: #333;
+            --bg: #fff;
+            --accent: #ccc;
+            --input-bg: #fafafa;
+            --radius: 15px;
+            --text-gray: #666;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
+        .subtitle { font-size: 1rem; color: var(--text-gray); font-weight: 600; margin-bottom: 40px; }
+
+        /* Input Area */
+        .input-group { position: relative; text-align: left; margin-bottom: 40px; }
+        .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; }
+        
+        input {
+            width: 100%;
+            padding: 25px 20px;
+            padding-right: 50px;
+            border: 2px solid var(--accent);
+            border-radius: var(--radius);
+            background: var(--input-bg);
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--main) !important;
+            box-sizing: border-box;
+            outline: none;
+            -webkit-appearance: none;
+            -webkit-text-fill-color: var(--main) !important;
+            opacity: 1 !important;
+        }
+        input::placeholder { color: #bbb; -webkit-text-fill-color: #bbb; }
+
+        .clear-btn {
+            position: absolute;
+            right: 15px;
+            bottom: 22px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.6rem;
+            font-weight: 800;
+            cursor: pointer;
+            padding: 5px;
+            display: none;
+            z-index: 2;
+        }
+        .clear-btn.active { display: block; }
+
+        /* Result Display */
+        .result-container {
+            background: var(--input-bg);
+            padding: 25px;
+            border-radius: var(--radius);
+            margin-bottom: 40px;
+            border: 1px solid var(--accent);
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .result-container:active { transform: scale(0.98); background: #eee; }
+        .result-label { font-size: 0.8rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 15px; display: block; }
+        .result-val { font-size: 2.2rem; font-weight: 800; display: block; word-break: break-all; }
+        .tap-to-copy { font-size: 0.75rem; font-weight: 700; color: #aaa; margin-top: 10px; display: block; }
+
+        /* Toast */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--main); color: #fff;
+            padding: 12px 24px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+        }
+
+        /* Footer & Buttons */
+        footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
+        footer a { color: inherit; text-decoration: underline; }
+        .footer-btns { margin-top: 30px; }
+        .kofi-btn {
+            display: inline-block; background: var(--main); color: #fff;
+            padding: 14px 28px; border-radius: var(--radius);
+            text-decoration: none; font-weight: bold; font-size: 15px; margin-bottom: 15px;
+        }
+        .home-btn {
+            display: block; width: 70%; margin: 0 auto; background: var(--accent);
+            color: var(--main); border: none; padding: 12px;
+            border-radius: var(--radius); font-weight: 800; font-size: 14px; cursor: pointer;
+        }
+
+        /* Modal */
+        #modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100;
+        }
+        .modal-content {
+            background: #fff; width: 85%; max-width: 340px; padding: 35px;
+            border-radius: var(--radius); text-align: left; position: relative;
+        }
+        .close-x { position: absolute; top: 15px; right: 20px; font-size: 24px; color: #888; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="toast">Copied!</div>
+
+<div class="container">
+    <h1>Sec to Clock</h1>
+    <p class="subtitle">Seconds to Time Unpacker.</p>
+
+    <div class="input-group">
+        <span class="input-label">Total Seconds</span>
+        <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" oninput="convert()">
+        <button class="clear-btn" id="clr-btn" onclick="clearInput()">×</button>
+    </div>
+
+    <div class="result-container" onclick="copyResult()">
+        <span class="result-label">Result (h : m : s)</span>
+        <span class="result-val" id="resultDisplay">00:00:00</span>
+        <span class="tap-to-copy">Tap to copy</span>
+    </div>
+
+    <div class="footer-btns">
+        <a href="https://ko-fi.com/afrorakda" target="_blank" class="kofi-btn">☕️buy me a coffee</a>
+        <button class="home-btn" onclick="showModal()">Add to Home Screen</button>
+    </div>
+
+    <footer>
+        <div>No login / No tracking / No ads / Browser only</div>
+        <div><a href="https://afrorakda.com/privacy/">Privacy Policy</a> / afrorakda © 2026</div>
+    </footer>
+</div>
+
+<div id="modal" onclick="hideModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-x" onclick="hideModal()">×</span>
+        <h3>📱 Install</h3>
+        <p>Add to your home screen.</p>
+        <p>🍏 <strong>iPhone (Safari):</strong><br>Tap Share, then Add to Home Screen.</p>
+        <p>🤖 <strong>Android (Chrome):</strong><br>Tap Menu (⋮), then Add to Home Screen.</p>
+    </div>
+</div>
+
+<script>
+    const secInput = document.getElementById('secInput');
+    const resultDisplay = document.getElementById('resultDisplay');
+    const clrBtn = document.getElementById('clr-btn');
+    const toast = document.getElementById('toast');
+
+    function convert() {
+        const totalSeconds = parseInt(secInput.value);
+        
+        // Show/Hide Clear Button
+        clrBtn.classList.toggle('active', secInput.value !== '');
+
+        if (isNaN(totalSeconds) || totalSeconds < 0) {
+            resultDisplay.innerText = "00:00:00";
+            return;
+        }
+
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+
+        // Formatting with leading zeros
+        const displayH = h.toString().padStart(2, '0');
+        const displayM = m.toString().padStart(2, '0');
+        const displayS = s.toString().padStart(2, '0');
+
+        resultDisplay.innerText = `${displayH}:${displayM}:${displayS}`;
+    }
+
+    function clearInput() {
+        secInput.value = '';
+        convert();
+        secInput.focus();
+    }
+
+    async function copyResult() {
+        const textToCopy = resultDisplay.innerText;
+        if (textToCopy === "00:00:00" && secInput.value === "") return;
+        
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 1500);
+        } catch (err) {}
+    }
+
+    function showModal() { document.getElementById('modal').style.display = 'flex'; }
+    function hideModal() { document.getElementById('modal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
