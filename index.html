@@ -158,24 +158,24 @@
 
     <div class="input-group">
         <span class="input-label">Total Seconds</span>
-        <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" pattern="[0-9]*" oninput="fromSec()">
+        <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="fromSec()">
         <button class="clear-btn" id="clr-sec" onclick="clearField('secInput')">×</button>
     </div>
 
     <div class="hms-grid">
         <div class="input-group">
             <span class="input-label">H</span>
-            <input type="number" id="hInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+            <input type="number" id="hInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="fromHMS()">
             <button class="clear-btn" id="clr-h" onclick="clearField('hInput')">×</button>
         </div>
         <div class="input-group">
             <span class="input-label">M</span>
-            <input type="number" id="mInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS('m')">
+            <input type="number" id="mInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="fromHMS('m')">
             <button class="clear-btn" id="clr-m" onclick="clearField('mInput')">×</button>
         </div>
         <div class="input-group">
             <span class="input-label">S</span>
-            <input type="number" id="sInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS('s')">
+            <input type="number" id="sInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" oninput="fromHMS('s')">
             <button class="clear-btn" id="clr-s" onclick="clearField('sInput')">×</button>
         </div>
     </div>
@@ -285,11 +285,11 @@
     function showModal() { document.getElementById('modal').style.display = 'flex'; }
     function hideModal() { document.getElementById('modal').style.display = 'none'; }
 
-    // 戻った時に再計算
-    window.onload = () => {
+    // Bfcache（戻る）対策: ページ表示時に強制同期
+    window.addEventListener('pageshow', () => {
         if (secInput.value) fromSec();
         else if (hInput.value || mInput.value || sInput.value) fromHMS();
-    };
+    });
 </script>
 
 </body>
