@@ -40,18 +40,17 @@
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
         .subtitle { font-size: 1rem; color: var(--text-gray); font-weight: 600; margin-bottom: 40px; }
 
-        /* Input Area */
-        .input-group { position: relative; text-align: left; margin-bottom: 40px; }
+        .input-group { position: relative; text-align: left; margin-bottom: 30px; }
         .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; }
         
         input {
             width: 100%;
-            padding: 25px 20px;
+            padding: 20px 15px;
             padding-right: 50px;
             border: 2px solid var(--accent);
             border-radius: var(--radius);
             background: var(--input-bg);
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 800;
             color: var(--main) !important;
             box-sizing: border-box;
@@ -65,7 +64,7 @@
         .clear-btn {
             position: absolute;
             right: 15px;
-            bottom: 22px;
+            bottom: 18px;
             background: none;
             border: none;
             color: #888;
@@ -78,28 +77,44 @@
         }
         .clear-btn.active { display: block; }
 
+        /* Reverse Inputs (H M S) */
+        .hms-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+        .hms-grid input {
+            font-size: 1.4rem;
+            padding: 15px 10px;
+            text-align: center;
+        }
+
         /* Result Display */
         .result-container {
             background: var(--input-bg);
-            padding: 25px;
+            padding: 30px 20px;
             border-radius: var(--radius);
             margin-bottom: 40px;
-            border: 1px solid var(--accent);
+            border: 2px solid var(--accent);
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
-        .result-container:active { transform: scale(0.98); background: #eee; }
-        .result-label { font-size: 0.8rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 15px; display: block; }
-        .result-val { font-size: 2.2rem; font-weight: 800; display: block; word-break: break-all; }
-        .tap-to-copy { font-size: 0.75rem; font-weight: 700; color: #aaa; margin-top: 10px; display: block; }
+        .result-container:active { transform: scale(0.97); border-color: var(--main); }
+        .result-label { font-size: 0.85rem; font-weight: 800; color: var(--text-gray); text-transform: uppercase; margin-bottom: 15px; display: block; }
+        .result-val { font-size: 2.8rem; font-weight: 800; display: block; line-height: 1; }
+        .tap-to-copy { font-size: 0.85rem; font-weight: 700; color: #888; margin-top: 15px; display: block; }
 
-        /* Toast */
-        #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+        .copied-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--main); color: #fff;
-            padding: 12px 24px; border-radius: 20px; font-size: 0.9rem; font-weight: 700;
-            opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 800;
+            opacity: 0; pointer-events: none; transition: opacity 0.1s;
         }
+        .copied-overlay.show { opacity: 1; }
 
         /* Footer & Buttons */
         footer { margin-top: 60px; font-size: 12px; color: #777; line-height: 1.8; font-weight: 500; }
@@ -116,7 +131,6 @@
             border-radius: var(--radius); font-weight: 800; font-size: 14px; cursor: pointer;
         }
 
-        /* Modal */
         #modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 100;
@@ -130,21 +144,35 @@
 </head>
 <body>
 
-<div id="toast">Copied!</div>
-
 <div class="container">
     <h1>Sec to Clock</h1>
     <p class="subtitle">Seconds to Time Unpacker.</p>
 
     <div class="input-group">
         <span class="input-label">Total Seconds</span>
-        <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" oninput="convert()">
-        <button class="clear-btn" id="clr-btn" onclick="clearInput()">×</button>
+        <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" pattern="[0-9]*" oninput="fromSec()">
+        <button class="clear-btn" id="clr-btn" onclick="clearAll()">×</button>
+    </div>
+
+    <div class="hms-grid">
+        <div class="input-group">
+            <span class="input-label">H</span>
+            <input type="number" id="hInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+        </div>
+        <div class="input-group">
+            <span class="input-label">M</span>
+            <input type="number" id="mInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+        </div>
+        <div class="input-group">
+            <span class="input-label">S</span>
+            <input type="number" id="sInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+        </div>
     </div>
 
     <div class="result-container" onclick="copyResult()">
-        <span class="result-label">Result (h : m : s)</span>
-        <span class="result-val" id="resultDisplay">00:00:00</span>
+        <div class="copied-overlay" id="copyOverlay">COPIED!</div>
+        <span class="result-label">Formated Time</span>
+        <span class="result-val" id="resultDisplay">00:00</span>
         <span class="tap-to-copy">Tap to copy</span>
     </div>
 
@@ -171,47 +199,67 @@
 
 <script>
     const secInput = document.getElementById('secInput');
+    const hInput = document.getElementById('hInput');
+    const mInput = document.getElementById('mInput');
+    const sInput = document.getElementById('sInput');
     const resultDisplay = document.getElementById('resultDisplay');
     const clrBtn = document.getElementById('clr-btn');
-    const toast = document.getElementById('toast');
+    const copyOverlay = document.getElementById('copyOverlay');
 
-    function convert() {
-        const totalSeconds = parseInt(secInput.value);
-        
-        // Show/Hide Clear Button
-        clrBtn.classList.toggle('active', secInput.value !== '');
+    function fromSec() {
+        const total = parseInt(secInput.value) || 0;
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
 
-        if (isNaN(totalSeconds) || totalSeconds < 0) {
-            resultDisplay.innerText = "00:00:00";
-            return;
-        }
+        hInput.value = h > 0 ? h : '';
+        mInput.value = m > 0 ? m : '';
+        sInput.value = s > 0 ? s : '';
 
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-
-        // Formatting with leading zeros
-        const displayH = h.toString().padStart(2, '0');
-        const displayM = m.toString().padStart(2, '0');
-        const displayS = s.toString().padStart(2, '0');
-
-        resultDisplay.innerText = `${displayH}:${displayM}:${displayS}`;
+        updateDisplay(h, m, s);
+        updateUI();
     }
 
-    function clearInput() {
-        secInput.value = '';
-        convert();
+    function fromHMS() {
+        const h = parseInt(hInput.value) || 0;
+        const m = parseInt(mInput.value) || 0;
+        const s = parseInt(sInput.value) || 0;
+        
+        const total = (h * 3600) + (m * 60) + s;
+        secInput.value = total > 0 ? total : '';
+
+        updateDisplay(h, m, s);
+        updateUI();
+    }
+
+    function updateDisplay(h, m, s) {
+        const mm = m.toString().padStart(2, '0');
+        const ss = s.toString().padStart(2, '0');
+        
+        if (h > 0) {
+            resultDisplay.innerText = `${h}:${mm}:${ss}`;
+        } else {
+            resultDisplay.innerText = `${mm}:${ss}`;
+        }
+    }
+
+    function updateUI() {
+        clrBtn.classList.toggle('active', secInput.value !== '' || hInput.value !== '' || mInput.value !== '' || sInput.value !== '');
+    }
+
+    function clearAll() {
+        [secInput, hInput, mInput, sInput].forEach(el => el.value = '');
+        resultDisplay.innerText = "00:00";
+        updateUI();
         secInput.focus();
     }
 
     async function copyResult() {
         const textToCopy = resultDisplay.innerText;
-        if (textToCopy === "00:00:00" && secInput.value === "") return;
-        
         try {
             await navigator.clipboard.writeText(textToCopy);
-            toast.style.opacity = '1';
-            setTimeout(() => toast.style.opacity = '0', 1500);
+            copyOverlay.classList.add('show');
+            setTimeout(() => copyOverlay.classList.remove('show'), 800);
         } catch (err) {}
     }
 
