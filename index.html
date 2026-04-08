@@ -16,6 +16,7 @@
             --input-bg: #fafafa;
             --radius: 15px;
             --text-gray: #666;
+            --placeholder: #bbb;
         }
 
         body {
@@ -27,6 +28,10 @@
             justify-content: center;
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            /* システムメニュー禁止 */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .container {
@@ -40,13 +45,13 @@
         h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; letter-spacing: -1px; }
         .subtitle { font-size: 1rem; color: var(--text-gray); font-weight: 600; margin-bottom: 40px; }
 
-        .input-group { position: relative; text-align: left; margin-bottom: 30px; }
+        .input-group { position: relative; text-align: left; margin-bottom: 25px; }
         .input-label { font-size: 0.9rem; font-weight: 800; color: var(--main); margin-left: 5px; margin-bottom: 8px; display: block; }
         
         input {
             width: 100%;
             padding: 20px 15px;
-            padding-right: 50px;
+            padding-right: 45px;
             border: 2px solid var(--accent);
             border-radius: var(--radius);
             background: var(--input-bg);
@@ -58,17 +63,18 @@
             -webkit-appearance: none;
             -webkit-text-fill-color: var(--main) !important;
             opacity: 1 !important;
+            user-select: text; /* 入力は許可 */
         }
-        input::placeholder { color: #bbb; -webkit-text-fill-color: #bbb; }
+        input::placeholder { color: var(--placeholder); -webkit-text-fill-color: var(--placeholder); }
 
         .clear-btn {
             position: absolute;
-            right: 15px;
-            bottom: 18px;
+            right: 12px;
+            bottom: 15px;
             background: none;
             border: none;
             color: #888;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             font-weight: 800;
             cursor: pointer;
             padding: 5px;
@@ -87,7 +93,13 @@
         .hms-grid input {
             font-size: 1.4rem;
             padding: 15px 10px;
+            padding-right: 35px;
             text-align: center;
+        }
+        .hms-grid .clear-btn {
+            right: 5px;
+            bottom: 10px;
+            font-size: 1.1rem;
         }
 
         /* Result Display */
@@ -151,27 +163,30 @@
     <div class="input-group">
         <span class="input-label">Total Seconds</span>
         <input type="number" id="secInput" placeholder="e.g. 3661" inputmode="numeric" pattern="[0-9]*" oninput="fromSec()">
-        <button class="clear-btn" id="clr-btn" onclick="clearAll()">×</button>
+        <button class="clear-btn" id="clr-sec" onclick="clearField('secInput')">×</button>
     </div>
 
     <div class="hms-grid">
         <div class="input-group">
             <span class="input-label">H</span>
             <input type="number" id="hInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+            <button class="clear-btn" id="clr-h" onclick="clearField('hInput')">×</button>
         </div>
         <div class="input-group">
             <span class="input-label">M</span>
-            <input type="number" id="mInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+            <input type="number" id="mInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS('m')">
+            <button class="clear-btn" id="clr-m" onclick="clearField('mInput')">×</button>
         </div>
         <div class="input-group">
             <span class="input-label">S</span>
-            <input type="number" id="sInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS()">
+            <input type="number" id="sInput" placeholder="0" inputmode="numeric" pattern="[0-9]*" oninput="fromHMS('s')">
+            <button class="clear-btn" id="clr-s" onclick="clearField('sInput')">×</button>
         </div>
     </div>
 
     <div class="result-container" onclick="copyResult()">
         <div class="copied-overlay" id="copyOverlay">COPIED!</div>
-        <span class="result-label">Formated Time</span>
+        <span class="result-label">Formatted Time</span>
         <span class="result-val" id="resultDisplay">00:00</span>
         <span class="tap-to-copy">Tap to copy</span>
     </div>
@@ -203,11 +218,12 @@
     const mInput = document.getElementById('mInput');
     const sInput = document.getElementById('sInput');
     const resultDisplay = document.getElementById('resultDisplay');
-    const clrBtn = document.getElementById('clr-btn');
     const copyOverlay = document.getElementById('copyOverlay');
 
     function fromSec() {
-        const total = parseInt(secInput.value) || 0;
+        let total = parseInt(secInput.value) || 0;
+        if (total < 0) total = 0;
+
         const h = Math.floor(total / 3600);
         const m = Math.floor((total % 3600) / 60);
         const s = total % 60;
@@ -217,10 +233,14 @@
         sInput.value = s > 0 ? s : '';
 
         updateDisplay(h, m, s);
-        updateUI();
+        updateClearBtns();
     }
 
-    function fromHMS() {
+    function fromHMS(type) {
+        // バリデーション: 分・秒を59以下に制限
+        if (type === 'm' && mInput.value > 59) mInput.value = 59;
+        if (type === 's' && sInput.value > 59) sInput.value = 59;
+
         const h = parseInt(hInput.value) || 0;
         const m = parseInt(mInput.value) || 0;
         const s = parseInt(sInput.value) || 0;
@@ -229,7 +249,7 @@
         secInput.value = total > 0 ? total : '';
 
         updateDisplay(h, m, s);
-        updateUI();
+        updateClearBtns();
     }
 
     function updateDisplay(h, m, s) {
@@ -243,15 +263,19 @@
         }
     }
 
-    function updateUI() {
-        clrBtn.classList.toggle('active', secInput.value !== '' || hInput.value !== '' || mInput.value !== '' || sInput.value !== '');
+    function updateClearBtns() {
+        document.getElementById('clr-sec').classList.toggle('active', secInput.value !== '');
+        document.getElementById('clr-h').classList.toggle('active', hInput.value !== '');
+        document.getElementById('clr-m').classList.toggle('active', mInput.value !== '');
+        document.getElementById('clr-s').classList.toggle('active', sInput.value !== '');
     }
 
-    function clearAll() {
-        [secInput, hInput, mInput, sInput].forEach(el => el.value = '');
-        resultDisplay.innerText = "00:00";
-        updateUI();
-        secInput.focus();
+    function clearField(id) {
+        const el = document.getElementById(id);
+        el.value = '';
+        if (id === 'secInput') fromSec();
+        else fromHMS();
+        el.focus();
     }
 
     async function copyResult() {
